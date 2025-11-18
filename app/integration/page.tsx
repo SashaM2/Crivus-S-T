@@ -302,6 +302,29 @@ const userId = window.CrivusQuiz.getUserId();
 window.CrivusQuiz.refresh();`}</code>
                 </pre>
               </div>
+
+              <div className="space-y-4 p-4 bg-purple-50 rounded-md">
+                <h3 className="font-semibold">📊 Rastreamento UTM (Opcional):</h3>
+                <p className="text-sm text-gray-700 mb-2">
+                  O sistema captura automaticamente parâmetros UTM da URL. Adicione aos seus links:
+                </p>
+                <pre className="p-4 bg-white rounded-md overflow-x-auto text-sm">
+                  <code>{`// Exemplo: Link com UTM para Google Ads
+https://seusite.com/quiz?quiz_id=${selectedQuiz}&utm_source=google&utm_campaign=ads-promocao
+
+// Exemplo: Link com UTM para Facebook
+https://seusite.com/quiz?quiz_id=${selectedQuiz}&utm_source=facebook&utm_campaign=post-janeiro
+
+// Exemplo: Link com UTM para Email
+https://seusite.com/quiz?quiz_id=${selectedQuiz}&utm_source=email&utm_campaign=newsletter-01
+
+// Os parâmetros UTM são capturados automaticamente!
+// Use os filtros no Dashboard para analisar por origem/campanha.`}</code>
+                </pre>
+                <p className="text-xs text-gray-600 mt-2">
+                  💡 <strong>Dica:</strong> Sempre adicione UTM nos links que você compartilha para rastrear a origem do tráfego. Veja o guia completo em <code className="bg-white px-1 rounded">GUIA_UTM.md</code>
+                </p>
+              </div>
             </>
           )}
         </CardContent>
