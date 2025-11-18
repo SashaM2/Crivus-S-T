@@ -24,8 +24,8 @@ O arquivo deve conter **3 variáveis**:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvdXJwcm9qZWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTIwMDAsImV4cCI6MTk2MDc2ODAwMH0...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvdXJwcm9qZWN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY0NTE5MjAwMCwiZXhwIjoxOTYwNzY4MDAwfQ...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_anon_key_aqui
+SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_aqui
 ```
 
 **⚠️ IMPORTANTE:**
@@ -65,8 +65,8 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 - ❌ Incorreto: `abc123.supabase.co` (falta https://)
 
 **Chaves (JWT tokens):**
-- ✅ Correto: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvdXJwcm9qZWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTIwMDAsImV4cCI6MTk2MDc2ODAwMH0.abc123...`
-- ❌ Incorreto: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9` (muito curta, está incompleta)
+- ✅ Correto: Uma chave JWT longa (centenas de caracteres) que começa com `eyJ` e contém 3 partes separadas por pontos
+- ❌ Incorreto: Chave muito curta ou incompleta (deve ter 3 partes separadas por pontos)
 
 **As chaves JWT são muito longas** (centenas de caracteres). Certifique-se de copiar a chave completa!
 
@@ -75,11 +75,11 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 ```env
 # ❌ ERRADO (tem espaços)
 NEXT_PUBLIC_SUPABASE_URL = https://seu-projeto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY = eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY = sua_service_role_key_aqui
 
 # ✅ CORRETO (sem espaços ao redor do =)
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_aqui
 ```
 
 ### 6. Verificar se não há aspas
@@ -87,11 +87,11 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
 ```env
 # ❌ ERRADO (com aspas)
 NEXT_PUBLIC_SUPABASE_URL="https://seu-projeto.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGci..."
+SUPABASE_SERVICE_ROLE_KEY="sua_service_role_key_aqui"
 
 # ✅ CORRETO (sem aspas)
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_aqui
 ```
 
 ### 7. Após corrigir, execute novamente
@@ -113,10 +113,12 @@ Ou simplesmente execute o script novamente - ele agora mostra mensagens mais cla
 ## 📝 Exemplo de `.env.local` correto
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0NTE5MjAwMCwiZXhwIjoxOTYwNzY4MDAwfQ.abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjQ1MTkyMDAwLCJleHAiOjE5NjA3NjgwMDB9.xyz789abc012def345ghi678jkl901mno234pqr567stu890vwx123yz
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_anon_key_completa_aqui
+SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_completa_aqui
 ```
+
+**Nota:** Substitua os valores acima pelas suas chaves reais obtidas no dashboard do Supabase.
 
 ## ⚠️ Segurança
 
