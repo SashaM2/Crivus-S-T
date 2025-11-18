@@ -10,12 +10,15 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return request.cookies.getAll()
+          get(name: string) {
+            return request.cookies.get(name)?.value
           },
-          setAll(cookiesToSet) {
+          set(name: string, value: string) {
             // Não podemos setar cookies em API routes, mas isso é ok
             // O middleware já atualiza os cookies
+          },
+          remove(name: string) {
+            // Não podemos remover cookies em API routes
           },
         },
       }
