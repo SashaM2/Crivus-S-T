@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Tracking Crivus</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0051cc;
+    }
+    .log {
+      background: #f5f5f5;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Teste de Tracking Crivus QuizIQ</h1>
+  
+  <div class="test-section">
+    <h2>Configuração</h2>
+    <p><strong>API URL:</strong> <span id="api-url">-</span></p>
+    <p><strong>Quiz ID:</strong> 
+      <input type="text" id="quiz-id-input" placeholder="Cole o UUID do quiz aqui" style="width: 400px; padding: 5px; margin-left: 10px;" />
+      <button onclick="updateQuizId()" style="margin-left: 10px;">Atualizar</button>
+    </p>
+    <p><strong>Quiz ID Atual:</strong> <span id="quiz-id-display" style="font-family: monospace; color: #666;">-</span></p>
+    <p><strong>Page ID:</strong> 
+      <input type="text" id="page-id-input" placeholder="Ex: pergunta_1, pergunta_2, oferta" style="width: 300px; padding: 5px; margin-left: 10px;" />
+      <button onclick="updatePageId()" style="margin-left: 10px;">Atualizar</button>
+    </p>
+    <p><strong>Page ID Atual:</strong> <span id="page-id-display" style="font-family: monospace; color: #666;">-</span></p>
+    <p><strong>User ID:</strong> <span id="user-id">-</span></p>
+    <p style="color: #d32f2f; font-size: 12px; margin-top: 10px;">
+      ⚠️ <strong>Importante:</strong> Você precisa substituir "SUBSTITUA-PELO-UUID-DO-QUIZ" por um UUID real de um quiz existente no banco de dados.
+      <br>Você pode encontrar o UUID do quiz na página de Quizzes do dashboard ou no banco de dados Supabase.
+    </p>
+  </div>
+
+  <!-- IMPORTANTE: Substitua SEU-DOMINIO.com pela URL do seu servidor -->
+  <script>
+    // ⚠️ CONFIGURE AQUI A URL DO SEU SERVIDOR
+    window.CRIVUS_API_URL = 'http://localhost:3000/api/events'; // ou 'https://seudominio.com/api/events'
+    console.log('🔧 API URL configurada:', window.CRIVUS_API_URL);
+  </script>
+  
+  <!-- IMPORTANTE: Substitua SEU-QUIZ-UUID pelo UUID real do quiz -->
+  <div data-quiz-id="SUBSTITUA-PELO-UUID-DO-QUIZ" data-page-id="teste_pagina">
+    <div class="test-section">
+      <h2>Teste de Eventos</h2>
+      <p>Abra o Console do Navegador (F12) para ver os logs.</p>
+      
+      <button data-track-next="1">Próxima Questão 1</button>
+      <button data-track-next="2">Próxima Questão 2</button>
+      <button data-track-next="3">Próxima Questão 3</button>
+      <button data-track-finish>Finalizar Quiz</button>
+      <button data-track-lead data-email="teste@exemplo.com" data-whatsapp="11999999999">
+        Capturar Lead
+      </button>
+    </div>
+
+    <div class="test-section">
+      <h2>API JavaScript</h2>
+      <button onclick="window.CrivusQuiz.trackNext(1)">trackNext(1)</button>
+      <button onclick="window.CrivusQuiz.trackFinish()">trackFinish()</button>
+      <button onclick="window.CrivusQuiz.trackLead('lead@test.com', '11988888888')">trackLead()</button>
+    </div>
+
+    <div class="test-section">
+      <h2>Logs</h2>
+      <div id="logs" class="log">Aguardando eventos...</div>
+    </div>
+  </div>
+
+  <!-- Carregar o script de analytics -->
+  <script src="http://localhost:3000/analytics.js"></script>
+  <!-- ou: <script src="https://seudominio.com/analytics.js"></script> -->
+
+  <script>
+    // Função para atualizar o quiz_id
+    function updateQuizId() {
+      const input = document.getElementById('quiz-id-input');
+      const quizId = input.value.trim();
+      if (!quizId) {
+        alert('Por favor, insira um Quiz ID válido');
+        return;
+      }
+      
+      // Atualizar o atributo data-quiz-id
+      const quizContainer = document.querySelector('[data-quiz-id]');
+      if (quizContainer) {
+        quizContainer.setAttribute('data-quiz-id', quizId);
+        document.getElementById('quiz-id-display').textContent = quizId;
+        console.log('✅ Quiz ID atualizado para:', quizId);
+        alert('Quiz ID atualizado! Os próximos eventos usarão este ID.');
+      }
+    }
+
+    // Função para atualizar o page_id
+    function updatePageId() {
+      const input = document.getElementById('page-id-input');
+      const pageId = input.value.trim();
+      
+      // Atualizar o atributo data-page-id ou window.PAGE_ID
+      const quizContainer = document.querySelector('[data-quiz-id]');
+      if (quizContainer) {
+        if (pageId) {
+          quizContainer.setAttribute('data-page-id', pageId);
+          window.PAGE_ID = pageId;
+        } else {
+          quizContainer.removeAttribute('data-page-id');
+          delete window.PAGE_ID;
+        }
+        document.getElementById('page-id-display').textContent = pageId || '(nenhum)';
+        console.log('✅ Page ID atualizado para:', pageId || 'null');
+        alert('Page ID atualizado! Os próximos eventos usarão este ID.');
+      }
+    }
+
+    // Permitir Enter para atualizar
+    document.addEventListener('DOMContentLoaded', () => {
+      const quizInput = document.getElementById('quiz-id-input');
+      if (quizInput) {
+        quizInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            updateQuizId();
+          }
+        });
+      }
+      
+      const pageInput = document.getElementById('page-id-input');
+      if (pageInput) {
+        pageInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            updatePageId();
+          }
+        });
+      }
+    });
+
+    // Mostrar informações de configuração
+    setTimeout(() => {
+      document.getElementById('api-url').textContent = window.CRIVUS_API_URL || 'Não configurado';
+      const currentQuizId = document.querySelector('[data-quiz-id]')?.getAttribute('data-quiz-id') || 'Não encontrado';
+      document.getElementById('quiz-id-display').textContent = currentQuizId;
+      document.getElementById('quiz-id-input').value = currentQuizId === 'SUBSTITUA-PELO-UUID-DO-QUIZ' ? '' : currentQuizId;
+      
+      const currentPageId = document.querySelector('[data-page-id]')?.getAttribute('data-page-id') || window.PAGE_ID || 'Não encontrado';
+      document.getElementById('page-id-display').textContent = currentPageId;
+      document.getElementById('page-id-input').value = currentPageId === 'teste_pagina' ? '' : (currentPageId !== 'Não encontrado' ? currentPageId : '');
+      
+      document.getElementById('user-id').textContent = window.CrivusQuiz?.getUserId() || 'Não disponível';
+    }, 1000);
+
+    // Interceptar logs do console
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    const logsDiv = document.getElementById('logs');
+
+    function addLog(type, ...args) {
+      const logEntry = document.createElement('div');
+      logEntry.style.color = type === 'error' ? 'red' : type === 'warn' ? 'orange' : 'black';
+      
+      // Converter argumentos para string de forma inteligente
+      const formattedArgs = args.map(arg => {
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg, null, 2);
+          } catch (e) {
+            return String(arg);
+          }
+        }
+        return String(arg);
+      });
+      
+      logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${formattedArgs.join(' ')}`;
+      logsDiv.appendChild(logEntry);
+      logsDiv.scrollTop = logsDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      if (args[0]?.includes?.('Crivus')) {
+        addLog('log', ...args);
+      }
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      if (args[0]?.includes?.('Crivus') || args[0]?.includes?.('Erro')) {
+        addLog('error', ...args);
+      }
+    };
+
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      if (args[0]?.includes?.('Crivus')) {
+        addLog('warn', ...args);
+      }
+    };
+  </script>
+</body>
+</html>
+
