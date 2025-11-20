@@ -81,7 +81,7 @@ export default function LandingPage() {
                     <div className="flex max-w-[980px] flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 fill-mode-backwards">
                         <h1 className="text-4xl font-extrabold leading-tight tracking-tighter text-[#2D3748] dark:text-foreground md:text-6xl lg:leading-[1.1]">
                             Analise Seus Quizzes em <br className="hidden md:block" />
-                            <span className="bg-gradient-to-r from-[#E2E8F0] via-[#F7FAFC] to-[#E2E8F0] dark:from-[#E2E8F0] dark:via-[#F7FAFC] dark:to-[#E2E8F0] bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-[#2D3748] via-[#4A5568] to-[#2D3748] dark:from-[#E2E8F0] dark:via-[#F7FAFC] dark:to-[#E2E8F0] bg-clip-text text-transparent">
                                 <Typewriter text="Tempo Real" cursor={false} speed={150} className="" />
                             </span>
                         </h1>
