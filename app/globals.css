@@ -4,48 +4,66 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 210 33% 98%;
+    --foreground: 210 29% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 29% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --popover-foreground: 210 29% 12%;
+    --primary: 215 14% 35%;
+    /* #4A5568 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 24% 24%;
+    /* #2D3748 */
+    --secondary-foreground: 210 29% 96%;
+    --muted: 210 30% 90%;
+    --muted-foreground: 215 15% 45%;
+    --accent: 210 68% 50%;
+    /* #3182CE */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 25% 90%;
+    --input: 210 25% 90%;
+    --ring: 215 14% 35%;
+    --radius: 0.4rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 214 24% 24%;
+    /* #2D3748 - darkest from palette */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    /* #F7FAFC - lightest from palette */
+    --card: 215 14% 35%;
+    /* #4A5568 - medium gray from palette */
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    /* #F7FAFC */
+    --popover: 215 14% 35%;
+    /* #4A5568 */
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    /* #F7FAFC */
+    --primary: 210 16% 93%;
+    /* #E2E8F0 - light gray from palette */
+    --primary-foreground: 214 24% 24%;
+    /* #2D3748 */
+    --secondary: 215 14% 35%;
+    /* #4A5568 */
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    /* #F7FAFC */
+    --muted: 215 14% 35%;
+    /* #4A5568 */
+    --muted-foreground: 210 16% 93%;
+    /* #E2E8F0 */
+    --accent: 210 68% 50%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 14% 35%;
+    /* #4A5568 */
+    --input: 215 14% 35%;
+    /* #4A5568 */
+    --ring: 210 16% 93%;
+    /* #E2E8F0 */
   }
 }
 
@@ -53,8 +71,125 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold tracking-tight text-foreground;
+  }
+
+  p {
+    @apply text-sm leading-relaxed text-muted-foreground;
+  }
+
+  ::selection {
+    background-color: #C3D0E0;
+    color: #1A202C;
   }
 }
 
+@layer components {
+  .surface {
+    @apply rounded-xl border border-border bg-card;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+
+  .premium-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-slate-700 via-slate-900 to-slate-700;
+  }
+}
+
+/* Remove browser default blue inputs */
+@layer base {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-clear-button {
+    display: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  *:focus-visible {
+    outline: none;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 1px hsl(var(--ring));
+  }
+}
+
+@layer utilities {
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-20px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out forwards;
+  }
+
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .shadow-premium {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+  }
+}

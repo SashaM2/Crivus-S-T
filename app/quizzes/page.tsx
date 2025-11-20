@@ -348,26 +348,28 @@ export default function QuizzesPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando quizzes...</p>
+          <p className="mt-4 text-muted-foreground">Carregando quizzes...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6" suppressHydrationWarning>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Meus Quizzes</h1>
-          <p className="text-gray-600 mt-1">Gerencie seus quizzes</p>
-        </div>
-        <Dialog open={open} onOpenChange={closeDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Quiz
-            </Button>
-          </DialogTrigger>
+    <div className="space-y-8" suppressHydrationWarning>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Coleção</p>
+            <h1 className="text-3xl font-semibold text-foreground">Meus Quizzes</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Organize, monitore e atualize cada experiência com poucos cliques</p>
+          </div>
+          <Dialog open={open} onOpenChange={closeDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Quiz
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -397,76 +399,74 @@ export default function QuizzesPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {quizzes.map((quiz) => {
           const metrics = quizMetrics[quiz.id]
           return (
-            <Card key={quiz.id} className="flex flex-col">
+            <Card key={quiz.id} className="flex h-full flex-col">
               <CardHeader>
-                <CardTitle className="line-clamp-2">{quiz.titulo}</CardTitle>
-                <CardDescription>
+                <CardTitle className="line-clamp-2 text-xl">{quiz.titulo}</CardTitle>
+                <CardDescription className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
                   Criado em {formatDate(quiz.criado_em)}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                {/* Métricas rápidas */}
+              <CardContent className="flex flex-1 flex-col gap-5">
                 {metrics && (
-                  <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3" />
+                  <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-4 text-sm">
+                    <div>
+                      <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
+                        <Users className="h-3.5 w-3.5" />
                         Iniciados
                       </div>
-                      <div className="text-lg font-semibold">{metrics.total_iniciados || 0}</div>
+                      <p className="text-xl font-semibold text-foreground">{metrics.total_iniciados || 0}</p>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <TrendingUp className="h-3 w-3" />
+                    <div>
+                      <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
+                        <TrendingUp className="h-3.5 w-3.5" />
                         Concluídos
                       </div>
-                      <div className="text-lg font-semibold text-green-600">{metrics.total_concluidos || 0}</div>
+                      <p className="text-xl font-semibold text-emerald-600">{metrics.total_concluidos || 0}</p>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <AlertTriangle className="h-3 w-3" />
+                    <div>
+                      <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
+                        <AlertTriangle className="h-3.5 w-3.5" />
                         Abandonos
                       </div>
-                      <div className="text-lg font-semibold text-red-600">{metrics.total_abandonos || 0}</div>
+                      <p className="text-xl font-semibold text-rose-500">{metrics.total_abandonos || 0}</p>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <BarChart3 className="h-3 w-3" />
-                        Taxa Abandono
+                    <div>
+                      <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        Taxa
                       </div>
-                      <div className="text-lg font-semibold text-orange-600">
+                      <p className="text-xl font-semibold text-amber-600">
                         {metrics.taxa_abandono ? metrics.taxa_abandono.toFixed(1) : '0.0'}%
-                      </div>
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {/* Botões de ação */}
                 <div className="flex flex-col gap-2 mt-auto">
                   <Button
-                    variant="default"
-                    size="sm"
+                    size="lg"
                     className="w-full"
                     onClick={() => handleViewDashboard(quiz.id)}
                   >
-                    <BarChart3 className="h-4 w-4 mr-2" />
+                    <BarChart3 className="mr-2 h-4 w-4" />
                     Ver Dashboard
                   </Button>
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       className="flex-1"
                       onClick={() => handleCopySnippet(quiz.id)}
                     >
-                      <Copy className="h-4 w-4 mr-2" />
+                      <Copy className="mr-2 h-4 w-4" />
                       Snippet
                     </Button>
                     <Button
@@ -494,7 +494,7 @@ export default function QuizzesPage() {
       {quizzes.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-gray-600 mb-4">Nenhum quiz criado ainda</p>
+            <p className="mb-4 text-muted-foreground">Nenhum quiz criado ainda</p>
             <Button onClick={() => setOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Criar Primeiro Quiz

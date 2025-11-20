@@ -1,12 +1,25 @@
 'use client'
 
+import type { ComponentType } from 'react'
 import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { Activity, FileText, LayoutDashboard, LogOut, Settings, Users } from 'lucide-react'
+
+import { AppLogo } from '@/components/logo'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useAuthStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { BarChart3, LayoutDashboard, FileText, Settings, Users, Activity, LogOut } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export default function DashboardLayout({
   children,
@@ -28,7 +41,7 @@ export default function DashboardLayout({
     let isMounted = true
     let hasChecked = false
     let timeoutId: NodeJS.Timeout | null = null
-    
+
     const checkUser = async () => {
       // Evitar múltiplas execuções simultâneas
       if (hasChecked) {
@@ -36,7 +49,7 @@ export default function DashboardLayout({
         return
       }
       hasChecked = true
-      
+
       // Verificar novamente antes de começar
       const stateBeforeCheck = useAuthStore.getState()
       if (stateBeforeCheck.user && !stateBeforeCheck.loading) {
@@ -48,18 +61,18 @@ export default function DashboardLayout({
       try {
         setLoading(true)
         console.log('🔍 Verificando autenticação...')
-        
+
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-        
+
         if (!isMounted) return
-        
+
         if (authError) {
           console.error('❌ Erro ao obter usuário:', authError)
           setLoading(false)
           router.push('/login')
           return
         }
-        
+
         if (!authUser) {
           console.log('⚠️ Nenhum usuário autenticado')
           setLoading(false)
@@ -125,7 +138,7 @@ export default function DashboardLayout({
           user: useAuthStore.getState().user?.email,
           loading: useAuthStore.getState().loading
         })
-        
+
         // Limpar timeout se ainda estiver ativo
         if (timeoutId) {
           clearTimeout(timeoutId)
@@ -209,10 +222,10 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>
-        <div className="text-center" suppressHydrationWarning>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" suppressHydrationWarning></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
+      <div className="flex min-h-screen items-center justify-center bg-background" suppressHydrationWarning>
+        <div className="rounded-md border border-border bg-card px-6 py-5 text-center" suppressHydrationWarning>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border border-muted-foreground/40 border-t-primary" suppressHydrationWarning />
+          <p className="mt-3 text-sm text-muted-foreground">Carregando...</p>
         </div>
       </div>
     )
@@ -224,93 +237,109 @@ export default function DashboardLayout({
 
   const isAdmin = user.role === 'admin'
 
-  const userNavItems = [
+  type NavItem = {
+    href: string
+    label: string
+    icon: ComponentType<{ className?: string }>
+  }
+
+  const userNavItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/quizzes', label: 'Meus Quizzes', icon: FileText },
     { href: '/history', label: 'Histórico', icon: Activity },
     { href: '/integration', label: 'Integração', icon: Settings },
   ]
 
-  const adminNavItems = [
+  const adminNavItems: NavItem[] = [
     { href: '/admin/users', label: 'Usuários', icon: Users },
     { href: '/admin/audit', label: 'Auditoria', icon: Activity },
   ]
 
+  const navItems = isAdmin ? adminNavItems : userNavItems
+
+  const renderNavLink = (item: NavItem, variant: "sidebar" | "pill" = "sidebar") => {
+    const Icon = item.icon
+    const isActive = pathname === item.href
+
+    return (
+      <Link
+        key={`${variant}-${item.href}`}
+        href={item.href}
+        aria-current={isActive ? "page" : undefined}
+        className={cn(
+          "group flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition",
+          variant === "pill" && "flex-none",
+          isActive
+            ? "text-foreground"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+        )}
+      >
+        <span
+          className={cn(
+            "h-1 w-1 rounded-full bg-transparent transition group-hover:bg-primary/60",
+            isActive && "h-2 w-2 bg-primary"
+          )}
+        />
+        <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
+        <span>{item.label}</span>
+      </Link>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50" suppressHydrationWarning>
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">Crivus Quiz Analytics ST</span>
-          </div>
+    <div className="min-h-screen bg-background" suppressHydrationWarning>
+      <header className="sticky top-0 z-40 border-b border-border bg-card">
+        <div className="mx-auto flex w-full max-w-full flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <AppLogo />
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
-            <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
-              {isAdmin ? 'Admin' : 'User'}
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
+            <ModeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                      {user.email.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium text-foreground">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isAdmin ? 'Administrador' : 'Usuário'}
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 flex gap-8">
-        {/* Sidebar */}
-        <aside className="w-64 flex-shrink-0">
+      <div className="lg:hidden">
+        <div className="mx-auto w-full max-w-full px-4 pt-4">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {navItems.map((item) => renderNavLink(item, "pill"))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-full flex-col gap-8 px-4 pb-10 pt-6 lg:flex-row lg:px-8">
+        <aside className="hidden w-60 flex-shrink-0 lg:block">
           <nav className="space-y-1">
-            {isAdmin ? (
-              <>
-                {adminNavItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                        isActive 
-                          ? 'bg-primary/10 text-primary font-medium' 
-                          : 'hover:bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  )
-                })}
-              </>
-            ) : (
-              <>
-                {userNavItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                        isActive 
-                          ? 'bg-primary/10 text-primary font-medium' 
-                          : 'hover:bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  )
-                })}
-              </>
-            )}
+            {navItems.map((item) => renderNavLink(item))}
           </nav>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1" suppressHydrationWarning>
-          {children}
+          <div className="flex flex-col gap-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>

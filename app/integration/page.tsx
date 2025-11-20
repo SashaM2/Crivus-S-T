@@ -185,27 +185,28 @@ export default function IntegrationPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando quizzes...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></div>
+          <p className="mt-4 text-muted-foreground">Carregando quizzes...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Integração</h1>
-        <p className="text-gray-600 mt-1">Configure o snippet de tracking para seus quizzes</p>
+    <div className="space-y-8">
+      <div className="rounded-xl border border-border bg-card p-5">
+        <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">setup guiado</p>
+        <h1 className="text-3xl font-semibold text-foreground">Integração</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Copie, cole e publique seu rastreamento em menos de cinco minutos</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Snippet Universal</CardTitle>
+          <CardTitle className="text-2xl">Snippet universal</CardTitle>
           <CardDescription>
-            Adicione este código ao seu quiz para começar a coletar dados automaticamente
+            Adicione este código ao seu quiz para começar a coletar dados automaticamente em qualquer ambiente
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -238,23 +239,23 @@ export default function IntegrationPage() {
             <>
               <div className="space-y-2">
                 <Label>Código do Snippet</Label>
-                <div className="relative">
-                  <pre className="p-4 bg-gray-100 rounded-md overflow-x-auto text-sm">
+                <div className="relative rounded-xl border border-border bg-card p-4">
+                  <pre className="max-h-[450px] overflow-x-auto text-xs text-foreground/90">
                     <code>{getSnippet()}</code>
                   </pre>
                   <Button
-                    className="absolute top-2 right-2"
+                    className="absolute right-4 top-4"
                     size="sm"
                     onClick={handleCopy}
                   >
                     {copied ? (
                       <>
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="mr-2 h-4 w-4" />
                         Copiado!
                       </>
                     ) : (
                       <>
-                        <Copy className="h-4 w-4 mr-2" />
+                        <Copy className="mr-2 h-4 w-4" />
                         Copiar
                       </>
                     )}
@@ -262,9 +263,9 @@ export default function IntegrationPage() {
                 </div>
               </div>
 
-              <div className="space-y-4 p-4 bg-blue-50 rounded-md">
-                <h3 className="font-semibold">Como usar:</h3>
-                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+              <div className="space-y-4 rounded-xl border border-border bg-primary/5 p-5">
+                <h3 className="text-lg font-semibold text-foreground">Como usar</h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                   <li>Adicione o script antes do fechamento da tag &lt;/body&gt; em todas as páginas</li>
                   <li>Adicione o atributo <code className="bg-white px-1 rounded">data-quiz-id</code> ao elemento principal do seu quiz</li>
                   <li>Use <code className="bg-white px-1 rounded">data-track-next="N"</code> em botões de próxima questão (N = número da questão)</li>
@@ -275,12 +276,12 @@ export default function IntegrationPage() {
                 </ol>
               </div>
 
-              <div className="space-y-4 p-4 bg-green-50 rounded-md">
+              <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-5">
                 <h3 className="font-semibold">API JavaScript:</h3>
-                <p className="text-sm text-gray-700 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   Você também pode usar a API JavaScript diretamente:
                 </p>
-                <pre className="p-4 bg-white rounded-md overflow-x-auto text-sm">
+                <pre className="rounded-2xl bg-white/90 p-4 text-xs">
                   <code>{`// Próxima questão
 window.CrivusQuiz.trackNext(1);
 
@@ -303,12 +304,12 @@ window.CrivusQuiz.refresh();`}</code>
                 </pre>
               </div>
 
-              <div className="space-y-4 p-4 bg-purple-50 rounded-md">
+              <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-5">
                 <h3 className="font-semibold">📊 Rastreamento UTM (Opcional):</h3>
-                <p className="text-sm text-gray-700 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   O sistema captura automaticamente parâmetros UTM da URL. Adicione aos seus links:
                 </p>
-                <pre className="p-4 bg-white rounded-md overflow-x-auto text-sm">
+                <pre className="rounded-2xl bg-white/90 p-4 text-xs">
                   <code>{`// Exemplo: Link com UTM para Google Ads
 https://seusite.com/quiz?quiz_id=${selectedQuiz}&utm_source=google&utm_campaign=ads-promocao
 
@@ -321,8 +322,8 @@ https://seusite.com/quiz?quiz_id=${selectedQuiz}&utm_source=email&utm_campaign=n
 // Os parâmetros UTM são capturados automaticamente!
 // Use os filtros no Dashboard para analisar por origem/campanha.`}</code>
                 </pre>
-                <p className="text-xs text-gray-600 mt-2">
-                  💡 <strong>Dica:</strong> Sempre adicione UTM nos links que você compartilha para rastrear a origem do tráfego. Veja o guia completo em <code className="bg-white px-1 rounded">GUIA_UTM.md</code>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  💡 <strong>Dica:</strong> Sempre adicione UTM nos links que você compartilha para rastrear a origem do tráfego. Veja o guia completo em <code className="rounded bg-white px-1">GUIA_UTM.md</code>
                 </p>
               </div>
             </>

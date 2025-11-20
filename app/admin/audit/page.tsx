@@ -6,9 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { supabase } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Download } from 'lucide-react'
+import { Download, FileText, ChevronDown } from 'lucide-react'
 import type { Event } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
@@ -92,45 +99,57 @@ export default function AdminAuditPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando auditoria...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></div>
+          <p className="mt-4 text-muted-foreground">Carregando auditoria...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Auditoria</h1>
-          <p className="text-gray-600 mt-1">Visualize todos os eventos do sistema</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleExport('csv')}>
-            <Download className="h-4 w-4 mr-2" />
-            CSV
-          </Button>
-          <Button variant="outline" onClick={() => handleExport('txt')}>
-            <Download className="h-4 w-4 mr-2" />
-            TXT
-          </Button>
-          <Button variant="outline" onClick={() => handleExport('pdf')}>
-            <Download className="h-4 w-4 mr-2" />
-            PDF
-          </Button>
+    <div className="space-y-8">
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">auditoria completa</p>
+            <h1 className="text-3xl font-semibold text-foreground">Auditoria</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Visualize cada evento registrado em todo o sistema</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">
+                <FileText className="mr-2 h-4 w-4" />
+                CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('txt')} className="cursor-pointer">
+                <FileText className="mr-2 h-4 w-4" />
+                TXT
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer">
+                <FileText className="mr-2 h-4 w-4" />
+                PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle className="text-base uppercase tracking-[0.3em] text-muted-foreground">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Quiz ID</Label>
               <Input
@@ -141,18 +160,18 @@ export default function AdminAuditPage() {
             </div>
             <div className="space-y-2">
               <Label>Data Inicial</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={filters.start_date}
-                onChange={(e) => setFilters(prev => ({ ...prev, start_date: e.target.value }))}
+                onChange={(value) => setFilters(prev => ({ ...prev, start_date: value }))}
+                placeholder="Selecione a data inicial"
               />
             </div>
             <div className="space-y-2">
               <Label>Data Final</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={filters.end_date}
-                onChange={(e) => setFilters(prev => ({ ...prev, end_date: e.target.value }))}
+                onChange={(value) => setFilters(prev => ({ ...prev, end_date: value }))}
+                placeholder="Selecione a data final"
               />
             </div>
             <div className="space-y-2">
@@ -181,39 +200,39 @@ export default function AdminAuditPage() {
           <CardTitle>Eventos ({events.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Data/Hora</th>
-                  <th className="text-left p-2">User ID</th>
-                  <th className="text-left p-2">Quiz ID</th>
-                  <th className="text-left p-2">Evento</th>
-                  <th className="text-left p-2">Questão</th>
-                  <th className="text-left p-2">UTM Source</th>
-                  <th className="text-left p-2">UTM Campaign</th>
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3">Data/Hora</th>
+                  <th className="px-4 py-3">User ID</th>
+                  <th className="px-4 py-3">Quiz ID</th>
+                  <th className="px-4 py-3">Evento</th>
+                  <th className="px-4 py-3">Questão</th>
+                  <th className="px-4 py-3">UTM Source</th>
+                  <th className="px-4 py-3">UTM Campaign</th>
                 </tr>
               </thead>
               <tbody>
                 {events.map((event) => (
-                  <tr key={event.id} className="border-b">
-                    <td className="p-2">{formatDate(event.timestamp)}</td>
-                    <td className="p-2 text-sm font-mono">{event.user_id}</td>
-                    <td className="p-2 text-sm font-mono">{event.quiz_id || '-'}</td>
-                    <td className="p-2">
-                      <span className="px-2 py-1 bg-primary/10 text-primary rounded text-sm">
+                  <tr key={event.id} className="border-t border-border/70 bg-card text-foreground transition hover:bg-muted/30">
+                    <td className="px-4 py-3">{formatDate(event.timestamp)}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{event.user_id}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{event.quiz_id || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
                         {event.event}
                       </span>
                     </td>
-                    <td className="p-2">{event.question || '-'}</td>
-                    <td className="p-2">{event.utm_source || '-'}</td>
-                    <td className="p-2">{event.utm_campaign || '-'}</td>
+                    <td className="px-4 py-3">{event.question || '-'}</td>
+                    <td className="px-4 py-3">{event.utm_source || '-'}</td>
+                    <td className="px-4 py-3">{event.utm_campaign || '-'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {events.length === 0 && (
-              <div className="text-center py-12 text-gray-600">
+              <div className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum evento encontrado
               </div>
             )}

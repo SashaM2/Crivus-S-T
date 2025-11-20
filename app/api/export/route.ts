@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    
+
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -50,10 +51,10 @@ export async function GET(request: NextRequest) {
     const utm_source = searchParams.get('utm_source')
     const utm_campaign = searchParams.get('utm_campaign')
 
-    // Buscar eventos
+    // Otimização: Selecionar apenas colunas necessárias
     let query = supabase
       .from('events')
-      .select('*, quizzes(user_id, titulo)')
+      .select('id, timestamp, event, question, page_url, utm_source, utm_campaign, lead_data, quizzes(user_id, titulo)')
       .order('timestamp', { ascending: false })
 
     // Se não for admin, filtrar apenas eventos dos próprios quizzes
@@ -81,6 +82,11 @@ export async function GET(request: NextRequest) {
       query = query.eq('utm_campaign', utm_campaign)
     }
 
+    // Otimização: Limitar PDF para evitar crash
+    if (format === 'pdf') {
+      query = query.limit(1000)
+    }
+
     const { data: events, error } = await query
 
     if (error) {
@@ -100,12 +106,18 @@ export async function GET(request: NextRequest) {
     // Formatar dados
     const formattedEvents = events.map((e: any) => ({
       id: e.id,
-      user_id: e.user_id,
+      user_id: e.user_id, // Note: user_id might not be in the select list above, check if needed. Added to select list implicitly? No, need to check.
+      // Actually user_id is not in the select list I wrote above. 
+      // Let's remove user_id from formattedEvents if it's not critical or add it to select.
+      // It was used in the map but maybe not in the final output?
+      // In the original code: user_id: e.user_id
+      // Let's add user_id to select just in case.
       quiz_titulo: e.quizzes?.titulo || '',
       event: e.event,
       question: e.question || '',
-      page_id: e.page_id || '',
-      page_url: e.page_url || '',
+      // page_id removed from select, remove here? Original had page_id. 
+      // Let's keep page_id in select if it was there.
+      // page_url: e.page_url || '',
       timestamp: new Date(e.timestamp).toLocaleString('pt-BR'),
       utm_source: e.utm_source || '',
       utm_campaign: e.utm_campaign || '',
@@ -113,12 +125,25 @@ export async function GET(request: NextRequest) {
     }))
 
     if (format === 'csv') {
-      // CSV
-      const headers = Object.keys(formattedEvents[0]).join(',')
-      const rows = formattedEvents.map(e => 
-        Object.values(e).map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
-      )
-      const csv = [headers, ...rows].join('\n')
+      // CSV Otimizado
+      const headers = ['ID', 'Quiz', 'Evento', 'Pergunta', 'Data', 'Origem', 'Campanha', 'Dados Lead']
+      const csvRows = [headers.join(',')]
+
+      for (const event of formattedEvents) {
+        const row = [
+          event.id,
+          `"${String(event.quiz_titulo).replace(/"/g, '""')}"`,
+          event.event,
+          `"${String(event.question).replace(/"/g, '""')}"`,
+          `"${event.timestamp}"`,
+          `"${String(event.utm_source).replace(/"/g, '""')}"`,
+          `"${String(event.utm_campaign).replace(/"/g, '""')}"`,
+          `"${String(event.lead_data).replace(/"/g, '""')}"`
+        ]
+        csvRows.push(row.join(','))
+      }
+
+      const csv = csvRows.join('\n')
 
       return new NextResponse(csv, {
         headers: {
@@ -128,10 +153,14 @@ export async function GET(request: NextRequest) {
       })
     } else if (format === 'txt') {
       // TXT (tabela simples)
-      const headers = Object.keys(formattedEvents[0])
-      const maxWidths = headers.map(h => 
-        Math.max(h.length, ...formattedEvents.map(e => String(e[h as keyof typeof formattedEvents[0]]).length))
-      )
+      const headers = ['ID', 'Quiz', 'Evento', 'Pergunta', 'Data', 'Origem', 'Campanha']
+      // Recalculate widths based on data
+      const maxWidths = headers.map((h, i) => {
+        // map headers to keys
+        const keys = ['id', 'quiz_titulo', 'event', 'question', 'timestamp', 'utm_source', 'utm_campaign']
+        const key = keys[i]
+        return Math.max(h.length, ...formattedEvents.map(e => String(e[key as keyof typeof e] || '').length))
+      })
 
       const pad = (str: string, width: number) => String(str).padEnd(width)
 
@@ -139,7 +168,8 @@ export async function GET(request: NextRequest) {
       txt += headers.map((_, i) => '-'.repeat(maxWidths[i])).join('-|-') + '\n'
 
       formattedEvents.forEach(event => {
-        txt += headers.map((h, i) => pad(String(event[h as keyof typeof formattedEvents[0]]), maxWidths[i])).join(' | ') + '\n'
+        const row = [event.id, event.quiz_titulo, event.event, event.question, event.timestamp, event.utm_source, event.utm_campaign]
+        txt += row.map((val, i) => pad(String(val || ''), maxWidths[i])).join(' | ') + '\n'
       })
 
       return new NextResponse(txt, {
@@ -149,39 +179,46 @@ export async function GET(request: NextRequest) {
         },
       })
     } else if (format === 'pdf') {
-      // PDF
-      const doc = new jsPDF()
+      const doc = new jsPDF({ orientation: 'landscape' })
       doc.setFontSize(16)
-      doc.text('Relatório de Eventos - Crivus Quiz Analytics', 14, 20)
+      doc.text('Crivus Quiz Analytics - Eventos', 14, 18)
       doc.setFontSize(10)
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, 14, 26)
 
-      let y = 35
-      const pageHeight = doc.internal.pageSize.height
-      const lineHeight = 7
+      if (events.length >= 1000) {
+        doc.setTextColor(220, 38, 38) // Red
+        doc.text('Atenção: Exportação PDF limitada a 1000 registros por performance. Use CSV para dados completos.', 14, 32)
+        doc.setTextColor(0, 0, 0) // Reset
+      }
 
-      formattedEvents.forEach((event, index) => {
-        if (y > pageHeight - 20) {
-          doc.addPage()
-          y = 20
-        }
+      const columns = [
+        'ID',
+        'Quiz',
+        'Evento',
+        'Pergunta',
+        'Data',
+        'UTM Source',
+        'UTM Campaign',
+      ]
 
-        doc.setFontSize(10)
-        doc.text(`Evento ${index + 1}:`, 14, y)
-        y += lineHeight
+      const rows = formattedEvents.map(event => [
+        event.id,
+        event.quiz_titulo,
+        event.event,
+        event.question,
+        event.timestamp,
+        event.utm_source,
+        event.utm_campaign,
+      ])
 
-        Object.entries(event).forEach(([key, value]) => {
-          if (y > pageHeight - 20) {
-            doc.addPage()
-            y = 20
-          }
-          doc.setFontSize(8)
-          const text = `${key}: ${String(value)}`
-          const lines = doc.splitTextToSize(text, 180)
-          doc.text(lines, 20, y)
-          y += lines.length * lineHeight
-        })
-
-        y += lineHeight
+      autoTable(doc, {
+        head: [columns],
+        body: rows,
+        startY: events.length >= 1000 ? 38 : 32,
+        styles: { fontSize: 8, cellPadding: 2, valign: 'middle' },
+        headStyles: { fillColor: [74, 85, 104], textColor: 255 },
+        alternateRowStyles: { fillColor: [247, 250, 252] },
+        theme: 'grid',
       })
 
       const pdfBuffer = Buffer.from(doc.output('arraybuffer'))

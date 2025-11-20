@@ -112,7 +112,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (end_date) {
-      eventsQuery = eventsQuery.lte('timestamp', end_date)
+      // Ajuste para incluir o dia inteiro quando apenas a data é fornecida (YYYY-MM-DD)
+      let finalEndDate = end_date
+      // Verifica se é formato de data simples YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(end_date)) {
+        finalEndDate = `${end_date} 23:59:59.999`
+      }
+      eventsQuery = eventsQuery.lte('timestamp', finalEndDate)
     }
 
     if (utm_source) {

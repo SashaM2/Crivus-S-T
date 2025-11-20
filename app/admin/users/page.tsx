@@ -7,9 +7,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import { supabase } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Trash2, Edit, UserX, UserCheck } from 'lucide-react'
+import { Plus, Trash2, Edit, UserX, UserCheck, MoreVertical } from 'lucide-react'
 import type { Profile } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
@@ -255,159 +262,176 @@ export default function AdminUsersPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando usuários...</p>
+          <p className="mt-4 text-muted-foreground">Carregando usuários...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gerenciar Usuários</h1>
-          <p className="text-gray-600 mt-1">Crie e gerencie usuários do sistema</p>
-        </div>
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Usuário
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingUser ? 'Atualize as informações do usuário' : 'Crie um novo usuário no sistema'}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="usuario@exemplo.com"
-                />
-              </div>
-              {!editingUser && (
+    <div className="space-y-8">
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Administração</p>
+            <h1 className="text-3xl font-semibold text-foreground">Gerenciar Usuários</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Controle acessos e mantenha sua equipe organizada</p>
+          </div>
+          <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingUser ? 'Atualize as informações do usuário' : 'Crie um novo usuário no sistema'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="••••••••"
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="usuario@exemplo.com"
                   />
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="role">Papel</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value: 'admin' | 'user') => setFormData(prev => ({ ...prev, role: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+                {!editingUser && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="role">Papel</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value: 'admin' | 'user') => setFormData(prev => ({ ...prev, role: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={() => editingUser ? handleUpdate(editingUser) : handleCreate()}>
-                {editingUser ? 'Salvar' : 'Criar'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => handleOpenChange(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={() => editingUser ? handleUpdate(editingUser) : handleCreate()}>
+                  {editingUser ? 'Salvar' : 'Criar'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
         </Dialog>
       </div>
+    </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Usuários ({users.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left p-3 font-semibold text-gray-700">Email</th>
-                  <th className="text-left p-3 font-semibold text-gray-700">Papel</th>
-                  <th className="text-left p-3 font-semibold text-gray-700">Status</th>
-                  <th className="text-left p-3 font-semibold text-gray-700">Criado em</th>
-                  <th className="text-left p-3 font-semibold text-gray-700">Ações</th>
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Papel</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Criado em</th>
+                  <th className="px-4 py-3">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="p-3 text-gray-900">{user.email}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                  <tr key={user.id} className="border-t border-border/70 bg-card text-foreground transition hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        user.role === 'admin' ? 'bg-purple-100/80 text-purple-700' : 'bg-muted text-muted-foreground'
                       }`}>
                         {user.role === 'admin' ? 'Admin' : 'User'}
                       </span>
                     </td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        user.active ? 'bg-emerald-100/80 text-emerald-700' : 'bg-rose-100/80 text-rose-700'
                       }`}>
                         {user.active ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
-                    <td className="p-3 text-gray-600 text-sm">{formatDate(user.created_at)}</td>
-                    <td className="p-3">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(user)}
-                          title="Editar usuário"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleActive(user)}
-                          title={user.active ? 'Desativar usuário' : 'Ativar usuário'}
-                        >
-                          {user.active ? (
-                            <UserX className="h-4 w-4" />
-                          ) : (
-                            <UserCheck className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(user)}
-                          title="Excluir usuário"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(user.created_at)}</td>
+                    <td className="px-4 py-3">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-md border border-border/60 hover:bg-muted/60"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(user)}
+                            className="cursor-pointer"
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar usuário
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleToggleActive(user)}
+                            className="cursor-pointer"
+                          >
+                            {user.active ? (
+                              <>
+                                <UserX className="mr-2 h-4 w-4" />
+                                Desativar usuário
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Ativar usuário
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(user)}
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir usuário
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {users.length === 0 && (
-              <div className="text-center py-12 text-gray-600">
+              <div className="py-12 text-center text-muted-foreground">
                 Nenhum usuário encontrado
               </div>
             )}
