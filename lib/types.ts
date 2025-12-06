@@ -13,6 +13,7 @@ export interface Quiz {
   user_id: string
   titulo: string
   criado_em: string
+  tracking_enabled?: boolean
 }
 
 export type EventType = 'start_quiz' | 'next_question' | 'finish_quiz' | 'lead_captured'

@@ -256,6 +256,11 @@
       return response.json();
     })
     .then(result => {
+      // Verificar se o tracking está desabilitado
+      if (result.tracking_enabled === false || (result.success === false && result.message?.includes('desabilitado'))) {
+        // Tracking desabilitado - não mostrar log (silencioso)
+        return;
+      }
       console.log('Crivus: ✅ Evento enviado com sucesso', { event, result });
     })
     .catch(err => {

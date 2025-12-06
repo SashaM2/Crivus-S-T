@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
 import { useQuizStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Trash2, Edit, Copy, Check, BarChart3, AlertTriangle, Users, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, Edit, Copy, Check, BarChart3, AlertTriangle, Users, TrendingUp, Activity, ActivityOff } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import type { AbandonoPorQuiz } from '@/lib/types'
@@ -43,7 +44,7 @@ export default function QuizzesPage() {
   }, [quizzes])
 
   const loadQuizzes = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (supabase.auth as any).getUser()
     if (!user) return
 
     const { data } = await supabase
@@ -60,7 +61,7 @@ export default function QuizzesPage() {
 
   const loadQuizMetrics = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await (supabase.auth as any).getSession()
       if (!session) return
 
       // Buscar métricas gerais (sem filtro de quiz) para obter abandono_por_quiz
@@ -146,7 +147,7 @@ export default function QuizzesPage() {
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (supabase.auth as any).getUser()
     if (!user) return
 
     const { error } = await supabase
@@ -222,6 +223,53 @@ export default function QuizzesPage() {
         description: 'Quiz excluído com sucesso',
       })
       loadQuizzes()
+    }
+  }
+
+  const handleToggleTracking = async (quizId: string, currentStatus: boolean) => {
+    try {
+      const { data: { session } } = await (supabase.auth as any).getSession()
+      if (!session) return
+
+      const newStatus = !currentStatus
+      
+      const response = await fetch(`/api/quizzes/${quizId}/tracking`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ tracking_enabled: newStatus }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        toast({
+          title: 'Sucesso',
+          description: newStatus 
+            ? 'Tracking ativado para este quiz' 
+            : 'Tracking desativado para este quiz',
+        })
+        // Atualizar o quiz localmente
+        setQuizzes(quizzes.map(q => 
+          q.id === quizId ? { ...q, tracking_enabled: newStatus } : q
+        ))
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Erro',
+          description: error.error || 'Erro ao atualizar status de tracking',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar tracking:', error)
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar status de tracking',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -363,9 +411,9 @@ export default function QuizzesPage() {
             <h1 className="text-3xl font-semibold text-foreground">Meus Quizzes</h1>
             <p className="mt-2 text-sm text-muted-foreground">Organize, monitore e atualize cada experiência com poucos cliques</p>
           </div>
-          <Dialog open={open} onOpenChange={closeDialog}>
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => setOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Quiz
               </Button>
@@ -409,10 +457,31 @@ export default function QuizzesPage() {
           return (
             <Card key={quiz.id} className="flex h-full flex-col">
               <CardHeader>
-                <CardTitle className="line-clamp-2 text-xl">{quiz.titulo}</CardTitle>
-                <CardDescription className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-                  Criado em {formatDate(quiz.criado_em)}
-                </CardDescription>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="line-clamp-2 text-xl">{quiz.titulo}</CardTitle>
+                    <CardDescription className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+                      Criado em {formatDate(quiz.criado_em)}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                      {quiz.tracking_enabled !== false ? (
+                        <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <ActivityOff className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <Switch
+                        checked={quiz.tracking_enabled !== false}
+                        onCheckedChange={() => handleToggleTracking(quiz.id, quiz.tracking_enabled !== false)}
+                        aria-label={`${quiz.tracking_enabled !== false ? 'Desativar' : 'Ativar'} tracking`}
+                      />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {quiz.tracking_enabled !== false ? 'Tracking Ativo' : 'Tracking Pausado'}
+                    </span>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col gap-5">
                 {metrics && (
@@ -429,21 +498,21 @@ export default function QuizzesPage() {
                         <TrendingUp className="h-3.5 w-3.5" />
                         Concluídos
                       </div>
-                      <p className="text-xl font-semibold text-emerald-600">{metrics.total_concluidos || 0}</p>
+                      <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">{metrics.total_concluidos || 0}</p>
                     </div>
                     <div>
                       <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         Abandonos
                       </div>
-                      <p className="text-xl font-semibold text-rose-500">{metrics.total_abandonos || 0}</p>
+                      <p className="text-xl font-semibold text-rose-500 dark:text-rose-400">{metrics.total_abandonos || 0}</p>
                     </div>
                     <div>
                       <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
                         <BarChart3 className="h-3.5 w-3.5" />
                         Taxa
                       </div>
-                      <p className="text-xl font-semibold text-amber-600">
+                      <p className="text-xl font-semibold text-amber-600 dark:text-amber-400">
                         {metrics.taxa_abandono ? metrics.taxa_abandono.toFixed(1) : '0.0'}%
                       </p>
                     </div>

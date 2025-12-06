@@ -90,11 +90,11 @@ export async function POST(request: NextRequest) {
     // Usar service role key se disponível (bypassa RLS), senão usar anon key
     const supabase = createServiceClient(supabaseUrl, keyToUse)
 
-    // Verificar se o quiz existe
-    console.log('🔍 Verificando se quiz existe:', quiz_id)
-    const { data: quizExists, error: quizError } = await supabase
+    // Verificar se o quiz existe e se o tracking está habilitado
+    console.log('🔍 Verificando se quiz existe e se tracking está habilitado:', quiz_id)
+    const { data: quizData, error: quizError } = await supabase
       .from('quizzes')
-      .select('id')
+      .select('id, tracking_enabled')
       .eq('id', quiz_id)
       .single()
 
@@ -107,11 +107,24 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    if (quizError || !quizExists) {
+    if (quizError || !quizData) {
       console.error('❌ Quiz não encontrado:', quiz_id, quizError)
       return NextResponse.json(
         { error: 'Quiz não encontrado' },
         { status: 404, headers: corsHeaders }
+      )
+    }
+
+    // Verificar se o tracking está habilitado para este quiz
+    if (quizData.tracking_enabled === false) {
+      console.log('⏸️ Tracking desabilitado para este quiz:', quiz_id)
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Tracking desabilitado para este quiz',
+          tracking_enabled: false
+        },
+        { status: 200, headers: corsHeaders }
       )
     }
 
@@ -193,7 +206,7 @@ export async function GET(request: NextRequest) {
         }
       )
       
-      const { data: { user: userData }, error: tokenError } = await supabase.auth.getUser(token)
+      const { data: { user: userData }, error: tokenError } = await (supabase.auth as any).getUser(token)
       
       if (tokenError) {
         console.error('Erro ao validar token:', tokenError)
@@ -224,7 +237,7 @@ export async function GET(request: NextRequest) {
         }
       )
       
-      const { data: { user: userData }, error: authError } = await supabase.auth.getUser()
+      const { data: { user: userData }, error: authError } = await (supabase.auth as any).getUser()
       
       if (authError) {
         console.error('Erro ao obter usuário dos cookies:', authError)
@@ -275,11 +288,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (start_date) {
-      query = query.gte('timestamp', start_date)
+      // Se receber apenas YYYY-MM-DD, converter para início do dia em UTC
+      // Se já for ISO string, usar diretamente
+      const startDateValue = /^\d{4}-\d{2}-\d{2}$/.test(start_date)
+        ? `${start_date}T00:00:00.000Z`
+        : start_date
+      query = query.gte('timestamp', startDateValue)
     }
 
     if (end_date) {
-      query = query.lte('timestamp', end_date)
+      // Se receber apenas YYYY-MM-DD, converter para final do dia em UTC
+      // Se já for ISO string, usar diretamente
+      const endDateValue = /^\d{4}-\d{2}-\d{2}$/.test(end_date)
+        ? `${end_date}T23:59:59.999Z`
+        : end_date
+      query = query.lte('timestamp', endDateValue)
     }
 
     if (utm_source) {
