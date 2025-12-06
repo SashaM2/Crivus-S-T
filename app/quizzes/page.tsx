@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { useQuizStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Trash2, Edit, Copy, Check, BarChart3, AlertTriangle, Users, TrendingUp, Activity, ActivityOff } from 'lucide-react'
+import { Plus, Trash2, Edit, Copy, Check, BarChart3, AlertTriangle, Users, TrendingUp, Activity, PauseCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import type { AbandonoPorQuiz } from '@/lib/types'
@@ -228,8 +228,26 @@ export default function QuizzesPage() {
 
   const handleToggleTracking = async (quizId: string, currentStatus: boolean) => {
     try {
-      const { data: { session } } = await (supabase.auth as any).getSession()
-      if (!session) return
+      const { data: { session }, error: sessionError } = await (supabase.auth as any).getSession()
+      
+      if (sessionError) {
+        console.error('Erro ao obter sessão:', sessionError)
+        toast({
+          title: 'Erro',
+          description: 'Erro de autenticação. Faça login novamente.',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      if (!session || !session.access_token) {
+        toast({
+          title: 'Erro',
+          description: 'Sessão não encontrada. Faça login novamente.',
+          variant: 'destructive',
+        })
+        return
+      }
 
       const newStatus = !currentStatus
       
@@ -469,7 +487,7 @@ export default function QuizzesPage() {
                       {quiz.tracking_enabled !== false ? (
                         <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <ActivityOff className="h-4 w-4 text-muted-foreground" />
+                        <PauseCircle className="h-4 w-4 text-muted-foreground" />
                       )}
                       <Switch
                         checked={quiz.tracking_enabled !== false}
