@@ -25,12 +25,12 @@ export async function GET(request: NextRequest) {
         }
       )
       
-      const { data: { user: userData }, error: tokenError } = await supabase.auth.getUser(token)
+      const { data: { user: userData }, error: tokenError } = await (supabase.auth as any).getUser(token)
       
       if (tokenError) {
-        console.error('Erro ao validar token do header, tentando cookies:', tokenError.message)
         // Se o token do header falhar, tentar usar cookies como fallback
-        // Não retornar erro ainda, deixar o código continuar para tentar cookies
+        // Não logar erro aqui pois é esperado que possa não haver token válido
+        // O código continuará para tentar cookies
       } else if (userData) {
         user = userData
       }
@@ -58,12 +58,16 @@ export async function GET(request: NextRequest) {
         }
       )
       
-      const { data: { user: userData }, error: authError } = await supabase.auth.getUser()
+      const { data: { user: userData }, error: authError } = await (supabase.auth as any).getUser()
       
       if (authError) {
-        console.error('Erro ao obter usuário dos cookies:', authError)
+        // Só logar erro se realmente não conseguir autenticar de nenhuma forma
+        // e apenas se for um erro inesperado (não AuthSessionMissingError)
+        if (!authError.message?.includes('Auth session missing')) {
+          console.error('Erro ao obter usuário dos cookies:', authError)
+        }
         return NextResponse.json(
-          { error: 'Erro de autenticação: ' + authError.message },
+          { error: 'Não autenticado. Faça login novamente.' },
           { status: 401 }
         )
       }
@@ -108,17 +112,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (start_date) {
-      eventsQuery = eventsQuery.gte('timestamp', start_date)
+      // Se receber apenas YYYY-MM-DD, converter para início do dia em UTC
+      // Se já for ISO string, usar diretamente
+      const startDateValue = /^\d{4}-\d{2}-\d{2}$/.test(start_date)
+        ? `${start_date}T00:00:00.000Z`
+        : start_date
+      eventsQuery = eventsQuery.gte('timestamp', startDateValue)
     }
 
     if (end_date) {
-      // Ajuste para incluir o dia inteiro quando apenas a data é fornecida (YYYY-MM-DD)
-      let finalEndDate = end_date
-      // Verifica se é formato de data simples YYYY-MM-DD
-      if (/^\d{4}-\d{2}-\d{2}$/.test(end_date)) {
-        finalEndDate = `${end_date} 23:59:59.999`
-      }
-      eventsQuery = eventsQuery.lte('timestamp', finalEndDate)
+      // Se receber apenas YYYY-MM-DD, converter para final do dia em UTC
+      // Se já for ISO string, usar diretamente
+      const endDateValue = /^\d{4}-\d{2}-\d{2}$/.test(end_date)
+        ? `${end_date}T23:59:59.999Z`
+        : end_date
+      eventsQuery = eventsQuery.lte('timestamp', endDateValue)
     }
 
     if (utm_source) {

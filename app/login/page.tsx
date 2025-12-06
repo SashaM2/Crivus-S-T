@@ -10,7 +10,6 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuthStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
 import { Eye, EyeOff, LayoutDashboard } from 'lucide-react'
-import { AppLogo } from '@/components/logo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -107,7 +106,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0" suppressHydrationWarning>
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r overflow-hidden">
         <div className="absolute inset-0 bg-zinc-900" />
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 opacity-90" />

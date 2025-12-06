@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         }
       )
       
-      const { data: { user: userData }, error: tokenError } = await supabase.auth.getUser(token)
+      const { data: { user: userData }, error: tokenError } = await (supabase.auth as any).getUser(token)
       
       if (tokenError) {
         console.error('Erro ao validar token:', tokenError)
@@ -55,12 +55,15 @@ export async function POST(request: NextRequest) {
         }
       )
       
-      const { data: { user: userData }, error: authError } = await supabase.auth.getUser()
+      const { data: { user: userData }, error: authError } = await (supabase.auth as any).getUser()
       
       if (authError) {
-        console.error('Erro ao obter usuário dos cookies:', authError)
+        // Só logar erro se for um erro inesperado (não AuthSessionMissingError)
+        if (!authError.message?.includes('Auth session missing')) {
+          console.error('Erro ao obter usuário dos cookies:', authError)
+        }
         return NextResponse.json(
-          { error: 'Erro de autenticação: ' + authError.message },
+          { error: 'Não autenticado. Faça login novamente.' },
           { status: 401 }
         )
       }
@@ -121,7 +124,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Criar usuário no Auth com email confirmado
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData, error: authError } = await (supabaseAdmin.auth as any).admin.createUser({
       email,
       password,
       email_confirm: true, // Confirmar email automaticamente
@@ -219,7 +222,7 @@ export async function DELETE(request: NextRequest) {
       }
     )
     
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (supabase.auth as any).getUser()
 
     if (!user) {
       return NextResponse.json(

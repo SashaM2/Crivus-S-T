@@ -240,9 +240,12 @@ export async function GET(request: NextRequest) {
       const { data: { user: userData }, error: authError } = await (supabase.auth as any).getUser()
       
       if (authError) {
-        console.error('Erro ao obter usuário dos cookies:', authError)
+        // Só logar erro se for um erro inesperado (não AuthSessionMissingError)
+        if (!authError.message?.includes('Auth session missing')) {
+          console.error('Erro ao obter usuário dos cookies:', authError)
+        }
         return NextResponse.json(
-          { error: 'Erro de autenticação: ' + authError.message },
+          { error: 'Não autenticado. Faça login novamente.' },
           { status: 401 }
         )
       }
