@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import type { Metrics } from '@/lib/types'
+import type { Metrics, Event as AnalyticsEvent } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
   try {
@@ -151,10 +151,29 @@ export async function GET(request: NextRequest) {
     // CÁLCULO DE MÉTRICAS CONFORME ESPECIFICAÇÃO
     // ============================================
 
+    // Garantir tipagem dos eventos
+    const typedEvents: AnalyticsEvent[] = (events ?? []) as AnalyticsEvent[]
+
     // Métricas básicas
-    const total_iniciados = events?.filter(e => e.event === 'start_quiz').length || 0
-    const total_concluidos = events?.filter(e => e.event === 'finish_quiz').length || 0
-    const leads_capturados = events?.filter(e => e.event === 'lead_captured').length || 0
+    // IMPORTANTE: total_iniciados conta SESSÕES ÚNICAS (não eventos totais)
+    // Isso evita contar múltiplas vezes quando o mesmo usuário recarrega a página ou volta a entrar
+    // Cada combinação única de user_id + quiz_id conta apenas UMA vez, mesmo que haja múltiplos eventos start_quiz
+    const iniciadosUnicos = new Set<string>()
+    typedEvents.forEach((e: AnalyticsEvent) => {
+      if (e.event === 'start_quiz' && e.user_id && e.quiz_id) {
+        // Chave única: user_id + quiz_id
+        // Mesmo usuário pode iniciar múltiplos quizzes diferentes (cada um conta separadamente)
+        // Mas se o mesmo usuário iniciar o mesmo quiz várias vezes (reload, voltar, etc), conta apenas 1 vez
+        const chaveUnica = `${e.user_id}_${e.quiz_id}`
+        iniciadosUnicos.add(chaveUnica)
+      }
+    })
+    const total_iniciados = iniciadosUnicos.size // Sessões únicas iniciadas
+
+    const total_concluidos =
+      typedEvents.filter((e: AnalyticsEvent) => e.event === 'finish_quiz').length || 0
+    const leads_capturados =
+      typedEvents.filter((e: AnalyticsEvent) => e.event === 'lead_captured').length || 0
 
     // Taxas
     const taxa_conclusao = total_iniciados > 0
@@ -180,22 +199,22 @@ export async function GET(request: NextRequest) {
 
     if (events && events.length > 0) {
       // Filtrar eventos do quiz atual (se filtrado)
-      const eventosFiltrados = quiz_id 
-        ? events.filter(e => e.quiz_id === quiz_id)
-        : events
+      const eventosFiltrados: AnalyticsEvent[] = quiz_id
+        ? typedEvents.filter((e: AnalyticsEvent) => e.quiz_id === quiz_id)
+        : typedEvents
 
       // Encontrar último evento de cada usuário por quiz
       // Usar chave composta user_id + quiz_id para rastrear por quiz
       const ultimoEventoPorUsuario: Record<string, {
         user_id: string
-        quiz_id: string
+        quiz_id: string | null
         page_id: string | null
         page_url: string | null
         event: string
         timestamp: string
       }> = {}
 
-      eventosFiltrados.forEach(event => {
+      eventosFiltrados.forEach((event: AnalyticsEvent) => {
         // Chave única por usuário e quiz
         const key = `${event.user_id}_${event.quiz_id}`
         const eventoExistente = ultimoEventoPorUsuario[key]
@@ -251,26 +270,28 @@ export async function GET(request: NextRequest) {
 
     if (events && events.length > 0) {
       // Buscar títulos dos quizzes
-      const quizIds = new Set(events.map(e => e.quiz_id).filter(Boolean))
+      const quizIds = new Set(
+        typedEvents.map((e: AnalyticsEvent) => e.quiz_id).filter(Boolean) as string[]
+      )
       const { data: quizzesData } = await supabase
         .from('quizzes')
         .select('id, titulo')
         .in('id', Array.from(quizIds))
 
       const quizTitulos: Record<string, string> = {}
-      quizzesData?.forEach(q => {
+      quizzesData?.forEach((q: { id: string; titulo: string }) => {
         quizTitulos[q.id] = q.titulo
       })
 
       // Encontrar último evento de cada usuário por quiz (todos os quizzes)
       const ultimoEventoPorUsuarioQuiz: Record<string, {
         user_id: string
-        quiz_id: string
+        quiz_id: string | null
         event: string
         timestamp: string
       }> = {}
 
-      events.forEach(event => {
+      typedEvents.forEach((event: AnalyticsEvent) => {
         const key = `${event.user_id}_${event.quiz_id}`
         const eventoExistente = ultimoEventoPorUsuarioQuiz[key]
         
@@ -289,7 +310,9 @@ export async function GET(request: NextRequest) {
 
       Object.values(ultimoEventoPorUsuarioQuiz).forEach(ultimoEvento => {
         if (ultimoEvento.event !== 'finish_quiz') {
-          abandonosPorQuiz[ultimoEvento.quiz_id] = (abandonosPorQuiz[ultimoEvento.quiz_id] || 0) + 1
+          const quizId = ultimoEvento.quiz_id
+          if (!quizId) return
+          abandonosPorQuiz[quizId] = (abandonosPorQuiz[quizId] || 0) + 1
         }
       })
 
@@ -369,8 +392,10 @@ export async function GET(request: NextRequest) {
     // ============================================
     // MÉTRICAS LEGADAS (para compatibilidade)
     // ============================================
-    const total_events = events?.length || 0
-    const uniqueQuizIds = new Set(events?.map(e => e.quiz_id).filter(Boolean) || [])
+    const total_events = typedEvents.length
+    const uniqueQuizIds = new Set(
+      typedEvents.map((e: AnalyticsEvent) => e.quiz_id).filter(Boolean) as string[]
+    )
     const total_quizzes = uniqueQuizIds.size
     const total_starts = total_iniciados
     const total_finishes = total_concluidos
@@ -379,7 +404,7 @@ export async function GET(request: NextRequest) {
 
     // Eventos por dia
     const eventsByDay: Record<string, number> = {}
-    events?.forEach(event => {
+    typedEvents.forEach((event: AnalyticsEvent) => {
       const date = new Date(event.timestamp).toISOString().split('T')[0]
       eventsByDay[date] = (eventsByDay[date] || 0) + 1
     })
@@ -390,7 +415,7 @@ export async function GET(request: NextRequest) {
 
     // Eventos por tipo
     const eventsByType: Record<string, number> = {}
-    events?.forEach(event => {
+    typedEvents.forEach((event: AnalyticsEvent) => {
       eventsByType[event.event] = (eventsByType[event.event] || 0) + 1
     })
 
